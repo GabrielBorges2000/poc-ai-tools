@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        RESEND_APIKEY: ${RESEND_APIKEY}
+        DATABASE_URL: ${DATABASE_URL}
+        NODE_ENV: ${NODE_ENV}
+        API_DOCS_LOGIN: ${API_DOCS_LOGIN}
+        API_DOCS_PASSWORD: ${API_DOCS_PASSWORD}
+        JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "3333:3333"   # Porta exposta do contêiner para a VPS
+    environment:
+      - RESEND_APIKEY=${RESEND_APIKEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - GITHUB_OAUTH_CLIENT_ID=${NODE_ENV}
+      - GITHUB_OAUTH_CLIENT_SECRET=${API_DOCS_LOGIN}
+      - GITHUB_OAUTH_CLIENT_REDIRECT_URI=${API_DOCS_PASSWORD}
+    volumes:
+      - ./:/usr/src/app 
+    command: >
+      sh -c "pnpm prisma migrate deploy && pnpm run start:prod"
