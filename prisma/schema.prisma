@@ -7,339 +7,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id           String   @id @default(uuid())
-  name         String?
-  email        String   @unique
-  passwordHash String?  @map("password_hash")
-  avatarUrl    String?  @map("avatar_url")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+// ============================================================
+// DOCUMENT ANALYSIS TABLES
+// ============================================================
 
-  tokens             Token[]
-  accounts           Account[]
-  invites            Invite[]
-  member_on          Member[]
-  owns_organizations Organization[]
-  owns_events        Event[]
-  event_transactions EventTransaction[]
-
-  @@map("users")
-}
-
-model Token {
-  id        String    @id @default(uuid())
-  type      TokenType
-  isActive  Boolean   @default(true) @map("is_active")
-  createdAt DateTime  @default(now()) @map("created_at")
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String @map("user_id")
-
-  @@map("tokens")
-}
-
-enum AccountProvider {
-  GITHUB
-}
-
-model Account {
-  id                String          @id @default(uuid())
-  provider          AccountProvider
-  providerAccountId String          @unique @map("provider_account_id")
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String @map("user_id")
-
-  @@unique([provider, userId])
-  @@map("accounts")
-}
-
-model Invite {
-  id        String   @id @default(uuid())
-  email     String
-  role      Role
-  createdAt DateTime @default(now()) @map("created_at")
-
-  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  authorId String? @map("author_id")
-
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String       @map("organization_id")
-
-  @@unique([email, organizationId])
-  @@index([email])
-  @@map("invites")
-}
-
-model Member {
-  id   String @id @default(uuid())
-  role Role   @default(MEMBER)
-
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String       @map("organization_id")
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String @map("user_id")
-
-  @@unique([organizationId, userId])
-  @@map("members")
-}
-
-model Organization {
-  id                        String   @id @default(uuid())
-  name                      String
-  cnpj                      String   @unique
-  slug                      String   @unique
-  domain                    String?
-  shouldAttachUsersByDomain Boolean  @default(false) @map("should_attach_users_by_domain")
-  avatarUrl                 String?  @map("avatar_url")
-  createdAt                 DateTime @default(now()) @map("created_at")
-  updatedAt                 DateTime @updatedAt @map("updated_at")
-
-  street     String? //Rua
-  number     String? //NúmeroGabriel Borges Oliveira
-  complement String? //Complemento
-  district   String? //Bairro
-  city       String? //Cidade
-  state      String? //Estado
-  country    String? //País
-  postalCode String? @map("postal_code") //Código de Barra
-
-  owner   User   @relation(fields: [ownerId], references: [id])
-  ownerId String @map("owner_id")
-
-  invites Invite[]
-  members Member[]
-  events  Event[]
-
-  @@map("organizations")
-}
-
-model Event {
-  id          String   @id @default(uuid())
-  name        String
-  description String
-  slug        String   @unique
-  avatarUrl   String?  @map("avatar_url")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  startDate      DateTime?             @map("start_date")
-  endDate        DateTime?             @map("end_date")
-  capacity       Int                   @default(500)
-  paymentMethod  PaymentMethodTicket[] @map("payment_method_ticket")
-  hasCertificate Boolean?              @default(false) @map("has_certificate")
-  ageRestriction Int?                  @default(0) @map("age_restriction")
-  cuponDiscount  Int?                  @map("cupon_discount")
-  status         EventStatus           @default(PENDING)
-  isOnline       Boolean               @default(false) @map("is_online")
-
-  street     String? //Rua
-  number     String? //Número
-  complement String? //Complemento
-  district   String? //Bairro
-  city       String? //Cidade
-  state      String? //Estado
-  country    String? //País
-  postalCode String? @map("postal_code") //Código de Barra 
-
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String       @map("organization_id")
-
-  owner   User   @relation(fields: [ownerId], references: [id])
-  ownerId String @map("owner_id")
-
-  tickets            Ticket[]
-  vouchers           Voucher[]
-  participants       EventParticipant[]
-  event_transactions EventTransaction[]
-
-  event_virtual_account EventVirtualAccount? @relation(fields: [virtualAccountId], references: [id], onDelete: Cascade)
-  virtualAccountId      String?              @unique @map("event_virtual_account_id")
-
-  @@map("events")
-}
-
-model Voucher {
-  id          String        @id @default(cuid())
-  title       String
-  status      VoucherStatus
+model DocumentType {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
   description String?
-  quantity    Int?
-  type        VoucherMethod
-  value       Int
+  fields      String // JSON with expected fields
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  participants EventParticipant[]
-
-  event   Event?  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  eventId String? @map("event_id")
-
-  @@map("vouchers")
+  @@map("document_type")
 }
 
-model EventTransaction {
-  id            String              @id @default(cuid())
-  value         Int
-  paymentMethod PaymentMethodTicket @map("payment_method_ticket")
-  status        PaymentStatus       @default(PENDING)
-  createdAt     DateTime            @default(now()) @map("created_at")
-  updatedAt     DateTime            @updatedAt @map("updated_at")
+model ProcessingLog {
+  id             Int      @id @default(autoincrement())
+  documentName   String
+  fileType       String
+  fileSize       Int
+  status         String // SUCCESS, ERROR, PENDING
+  processingTime Int // milliseconds
+  tokensUsed     Int      @default(0)
+  modelUsed      String
+  result         String? // CORRETO, INCORRETO, ERRO
+  description    String?
+  validate       String?
+  fieldErrors    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  agency   String?
-  account  String?
-  document String?
-  bank     String?
-  pixKey   String? @map("pix_key")
-
-  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  eventId String @map("event_id")
-
-  virtual_account  EventVirtualAccount @relation(fields: [virtualAccountId], references: [id], onDelete: Cascade)
-  virtualAccountId String              @map("event_virtual_account_id")
-
-  user   User   @relation(fields: [userId], references: [id])
-  userId String @map("user_id")
-
-  @@map("event_transactions")
-}
-
-model EventVirtualAccount {
-  id            String  @id @default(cuid())
-  balance       Decimal @default(0.0) @db.Decimal(10, 2)
-  balanceLiquid Decimal @default(0.0) @map("balance_liquid") @db.Decimal(10, 2)
-
-  transations EventTransaction[]
-  Event       Event?
-
-  @@map("virtual_accounts")
-}
-
-model Ticket {
-  id                String       @id @default(cuid())
-  title             String
-  description       String?
-  price             Decimal      @default(0.0) @db.Decimal(10, 2)
-  quantity          Int
-  startDate         DateTime?    @map("start_date") @db.Date
-  endDate           DateTime?    @map("end_date") @db.Date
-  emphasisSalesPage Boolean?     @default(false) @map("emphasis_sales_page")
-  status            TicketStatus @default(AVAILABLE)
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  event   Event?  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  eventId String? @map("event_id")
-
-  participants EventParticipant[]
-
-  @@map("tickets")
-}
-
-model Participant {
-  id               String    @id @default(cuid())
-  name             String
-  email            String    @unique
-  age              Int?
-  birthDate        DateTime? @map("birth_date") @db.Date
-  password         String?
-  cpf              String?
-  phone            String?
-  avatarUrl        String?   @map("avatar_url")
-  registrationDate DateTime  @default(now()) @map("registration_date")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
-
-  events EventParticipant[]
-
-  @@map("participants")
-}
-
-model EventParticipant {
-  id                String              @id @default(cuid())
-  participantStatus ParticipantStatus   @default(PENDING) @map("participant_status")
-  paymentStatus     PaymentStatus       @default(PENDING) @map("payment_status")
-  paymentMethod     PaymentMethodTicket @map("payment_method_ticket")
-  checkInStatus     Boolean             @default(false) @map("check_in_status")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  participant   Participant @relation(fields: [participantId], references: [id])
-  participantId String      @map("participant_id")
-
-  event   Event  @relation(fields: [eventId], references: [id])
-  eventId String @map("event_id")
-
-  Ticket   Ticket? @relation(fields: [ticketId], references: [id])
-  ticketId String? @map("ticket_id")
-
-  voucher   Voucher? @relation(fields: [voucherId], references: [id])
-  voucherId String?  @map("voucher_id")
-
-  @@map("event_participants")
-}
-
-enum Role {
-  ADMIN
-  MANAGER
-  MEMBER
-  BILLING
-  DEVELOPER
-}
-
-enum TicketStatus {
-  AVAILABLE // Disponível para venda  
-  UNAVAILABLE // Indisponível temporariamente  
-  HIDDEN // Oculto (não exibido na página de vendas)  
-  ARCHIVED // Ingresso descontinuado (não será mais vendido, mas mantido no histórico)  
-}
-
-enum VoucherStatus {
-  ACTIVE // Disponível para uso  
-  INACTIVE // Indisponível temporariamente  
-  ARCHIVED // Voucher descontinuado (não será mais vendido, mas mantido no histórico)  
-}
-
-enum ParticipantStatus {
-  PENDING
-  CONFIRMED
-  CANCELED
-}
-
-enum TokenType {
-  PASSWORD_RECOVER
-  MAGIC_LINK
-  VERIFY_EMAIL
-}
-
-enum EventStatus {
-  PENDING
-  ACTIVE
-  FINISHED
-  CANCELED
-}
-
-enum PaymentStatus {
-  PENDING
-  PAID
-  CANCELED
-}
-
-enum PaymentMethodTransaction {
-  PIX
-  BANK_TRANSFER
-  CASH
-}
-
-enum PaymentMethodTicket {
-  CREDIT
-  DEBIT
-  TICKET
-  PIX
-}
-
-enum VoucherMethod {
-  PERCENTAGE
-  VALUE
+  @@map("processing_log")
 }

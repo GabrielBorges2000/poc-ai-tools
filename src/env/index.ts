@@ -3,7 +3,8 @@ import { z } from "zod";
 
 export const envSchema = z.object({
   PORT: z.coerce.number().default(3333),
-  DATABASE_URL: z.url(),
+  DATABASE_URL: z.string().default("file:./dev.db"),
+  OLLAMA_HOMESERVER_URL: z.string().url().optional(),
 });
 
 const _env = envSchema.safeParse(process.env);

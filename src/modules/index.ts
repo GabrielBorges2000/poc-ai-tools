@@ -1,6 +1,6 @@
 import type { FastifyInstanceProps } from "@/@types/fastify-instance";
-import { chatAi } from "./chat";
+import { documentAnalysis } from "./document-analysis-router";
 
 export default function registerRoutes(app: FastifyInstanceProps) {
-  app.register(chatAi);
+  app.register(documentAnalysis);
 }

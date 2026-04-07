@@ -10,7 +10,7 @@ const start = async () => {
       port: env.PORT,
     })
 
-    await checkConnectionDatabase()
+    // await checkConnectionDatabase()
 
     console.log('🚀 HTTP Server Running!')
   } catch (error) {

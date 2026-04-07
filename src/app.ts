@@ -1,26 +1,31 @@
-import fastifyCors from '@fastify/cors'
-import fastify from 'fastify'
+import fastifyCors from "@fastify/cors";
+import fastify from "fastify";
 import {
   serializerCompiler,
   validatorCompiler,
   type ZodTypeProvider,
-} from 'fastify-type-provider-zod'
-import { swaggerSetup } from '@/lib/swagger'
-import { errorHandler } from '@/modules/_errors/error-handler'
+} from "fastify-type-provider-zod";
+import multipart from "@fastify/multipart";
+import { swaggerSetup } from "@/lib/swagger";
+import { errorHandler } from "@/modules/_errors/error-handler";
 
-import registerRoutes from './modules'
+import registerRoutes from "./modules";
 
-const app = fastify().withTypeProvider<ZodTypeProvider>()
+const app = fastify().withTypeProvider<ZodTypeProvider>();
 
-app.setValidatorCompiler(validatorCompiler)
-app.setSerializerCompiler(serializerCompiler)
+app.setValidatorCompiler(validatorCompiler);
+app.setSerializerCompiler(serializerCompiler);
+app.setErrorHandler(errorHandler);
+app.register(multipart, {
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB
+  },
+});
 
-app.setErrorHandler(errorHandler)
+swaggerSetup(app);
 
-swaggerSetup(app)
+app.register(fastifyCors);
 
-app.register(fastifyCors)
+registerRoutes(app);
 
-registerRoutes(app)
-
-export { app }
+export { app };

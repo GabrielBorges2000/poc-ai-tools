@@ -1,8 +1,21 @@
-import { PrismaClient } from "@prisma/client";
+export type DocumentoEstrutura = {
+  nomeDocumento: string;
+  nomeAlternativo?: string[];
+  titulosObrigatorios: string[];
+  camposObrigatorios: string[];
+  camposOpcionais?: string[];
+  elementosVisuaisObrigatorios?: string[];
+  padroes?: {
+    tamanhoPagina?: string;
+    cores?: string[];
+    assinatura?: boolean;
+    hologramas?: boolean;
+    codigoBarras?: boolean;
+    qrCode?: boolean;
+  };
+};
 
-const prisma = new PrismaClient();
-
-const documentosEstrutura = [
+export const documentosEstrutura: DocumentoEstrutura[] = [
   {
     nomeDocumento: "RG",
     nomeAlternativo: ["Carteira de Identidade", "Registro Geral"],
@@ -15,8 +28,6 @@ const documentosEstrutura = [
       cores: ["azul", "branco", "preto"],
       assinatura: true,
       hologramas: true,
-      codigoBarras: false,
-      qrCode: false,
     },
   },
   {
@@ -25,14 +36,9 @@ const documentosEstrutura = [
     titulosObrigatorios: ["Cadastro de Pessoas Físicas", "CPF"],
     camposObrigatorios: ["Nome", "Número do CPF"],
     camposOpcionais: ["Data de Nascimento", "Inscrição"],
-    elementosVisuaisObrigatorios: [],
     padroes: {
-      tamanhoPagina: "A6",
       cores: ["verde", "branco", "preto"],
-      assinatura: false,
-      hologramas: false,
       codigoBarras: true,
-      qrCode: false,
     },
   },
   {
@@ -43,12 +49,9 @@ const documentosEstrutura = [
     camposOpcionais: ["CPF", "Data de Nascimento", "CNH"],
     elementosVisuaisObrigatorios: ["Foto", "Assinatura"],
     padroes: {
-      tamanhoPagina: "A6",
       cores: ["laranja", "branco", "preto"],
-      assinatura: true,
-      hologramas: true,
-      codigoBarras: false,
       qrCode: true,
+      hologramas: true,
     },
   },
   {
@@ -61,10 +64,7 @@ const documentosEstrutura = [
     padroes: {
       tamanhoPagina: "A5",
       cores: ["vinho", "dourado", "branco"],
-      assinatura: true,
       hologramas: true,
-      codigoBarras: false,
-      qrCode: false,
     },
   },
   {
@@ -73,31 +73,13 @@ const documentosEstrutura = [
     titulosObrigatorios: ["Cadastro Nacional da Pessoa Jurídica", "CNPJ"],
     camposObrigatorios: ["Razão Social", "Número do CNPJ"],
     camposOpcionais: ["Data de Inscrição"],
-    elementosVisuaisObrigatorios: [],
-    padroes: {
-      tamanhoPagina: "A6",
-      cores: ["azul", "branco"],
-      assinatura: false,
-      hologramas: false,
-      codigoBarras: true,
-      qrCode: false,
-    },
   },
   {
     nomeDocumento: "Certidão de Nascimento",
     nomeAlternativo: ["Registro de Nascimento"],
     titulosObrigatorios: ["Cartório", "Registro de Nascimento"],
     camposObrigatorios: ["Nome", "Data de Nascimento", "Filiação"],
-    camposOpcionais: [],
     elementosVisuaisObrigatorios: ["Brasão", "Assinatura do Cartorário"],
-    padroes: {
-      tamanhoPagina: "A4",
-      cores: ["branco", "preto"],
-      assinatura: true,
-      hologramas: false,
-      codigoBarras: false,
-      qrCode: false,
-    },
   },
   {
     nomeDocumento: "Certificado Médico",
@@ -110,15 +92,9 @@ const documentosEstrutura = [
       "CRM",
       "Diagnóstico ou Motivo",
     ],
-    camposOpcionais: [],
-    elementosVisuaisObrigatorios: ["Carimbo CRM", "Assinatura do Médico"],
+    elementosVisuaisObrigatorios: ["Carimbo CRMB", "Assinatura do Médico"],
     padroes: {
-      tamanhoPagina: "A4",
       cores: ["branco", "preto"],
-      assinatura: true,
-      hologramas: false,
-      codigoBarras: false,
-      qrCode: false,
     },
   },
   {
@@ -127,57 +103,5 @@ const documentosEstrutura = [
     titulosObrigatorios: ["Contrato", "Acordo"],
     camposObrigatorios: ["Título do contrato", "Partes envolvidas", "Data"],
     camposOpcionais: ["Assinaturas", "Assinado digitalmente"],
-    elementosVisuaisObrigatorios: [],
-    padroes: {
-      tamanhoPagina: "A4",
-      cores: ["branco", "preto"],
-      assinatura: true,
-      hologramas: false,
-      codigoBarras: false,
-      qrCode: false,
-    },
   },
 ];
-
-async function main() {
-  console.log("Iniciando seed dos tipos de documentos...\n");
-
-  for (const doc of documentosEstrutura) {
-    const fields = JSON.stringify({
-      nomeAlternativo: doc.nomeAlternativo || [],
-      titulosObrigatorios: doc.titulosObrigatorios,
-      camposObrigatorios: doc.camposObrigatorios,
-      camposOpcionais: doc.camposOpcionais || [],
-      elementosVisuaisObrigatorios: doc.elementosVisuaisObrigatorios || [],
-      padroes: doc.padroes || {},
-    });
-
-    await prisma.documentType.upsert({
-      where: { name: doc.nomeDocumento },
-      update: {
-        description: `Tipo de documento: ${doc.nomeDocumento}`,
-        fields,
-      },
-      create: {
-        name: doc.nomeDocumento,
-        description: `Tipo de documento: ${doc.nomeDocumento}`,
-        fields,
-      },
-    });
-
-    console.log(`  ✓ ${doc.nomeDocumento}`);
-  }
-
-  console.log(
-    `\nSeed concluído! ${documentosEstrutura.length} tipos de documentos inseridos.`,
-  );
-}
-
-main()
-  .catch((e) => {
-    console.error("Erro durante o seed:", e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
