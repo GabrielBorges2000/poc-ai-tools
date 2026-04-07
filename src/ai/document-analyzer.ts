@@ -147,7 +147,7 @@ function buildPrompt(
   return `Você é um sistema PROFISSIONAL E RIGOROSO de validação de documentos.
 
 DOCUMENTO: ${documentName}
-VALIDADE INFORMADA PELO USUÁRIO: ${(validate ?? "VALIDADE INDETERMINADA")}
+VALIDADE INFORMADA PELO USUÁRIO: ${(validate ?? "VALIDADE Não informada")}
 
 ${fieldsInfo}
 
