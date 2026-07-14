@@ -2,7 +2,7 @@ import { ollama } from "@/lib/ollama";
 import { generateText } from "ai";
 import { prisma } from "@/lib/prisma";
 
-const MODEL_NAME = "qwen3.5:cloud";
+const MODEL_NAME = "minimax-m3:cloud";
 
 export interface AnalysisResult {
   result: string;
@@ -44,7 +44,7 @@ export async function analyzeDocument(
 
       const systemPrompt = buildPrompt(docType?.fields, documentName, validate);
 
-      console.log({ systemPrompt, type: 'IMAGE' })
+      console.log({ systemPrompt, type: "IMAGE" });
 
       const answer = await generateText({
         model,
@@ -83,7 +83,7 @@ export async function analyzeDocument(
 
       const systemPrompt = buildPrompt(docType?.fields, documentName);
 
-      console.log({ systemPrompt, type: 'TEXT/FILE' })
+      console.log({ systemPrompt, type: "TEXT/FILE" });
 
       const answer = await generateText({
         model,
@@ -140,14 +140,14 @@ function buildPrompt(
     ? `\nCAMPOS ESPERADOS (da base de conhecimento):\n${storedFields.toString()}`
     : `\nCAMPOS ESPERADOS: Não encontrados na base. Use análise genérica. com base no nome do arquivo: ${documentName}`;
 
-  const currentDate = new Date().toISOString().split('T')[0];
+  const currentDate = new Date().toISOString().split("T")[0];
 
   console.log({ currentDate });
 
   return `Você é um sistema PROFISSIONAL E RIGOROSO de validação de documentos.
 
 DOCUMENTO: ${documentName}
-VALIDADE INFORMADA PELO USUÁRIO: ${(validate ?? "VALIDADE Não informada")}
+VALIDADE INFORMADA PELO USUÁRIO: ${validate ?? "VALIDADE Não informada"}
 
 ${fieldsInfo}
 

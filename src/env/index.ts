@@ -2,9 +2,9 @@ import "dotenv/config";
 import { z } from "zod";
 
 export const envSchema = z.object({
-  PORT: z.coerce.number().default(3333),
+  PORT: z.coerce.number().default(3334),
   DATABASE_URL: z.string().default("file:./dev.db"),
-  OLLAMA_HOMESERVER_URL: z.string().url().optional(),
+  OLLAMA_HOMESERVER_URL: z.url().optional(),
 });
 
 const _env = envSchema.safeParse(process.env);
